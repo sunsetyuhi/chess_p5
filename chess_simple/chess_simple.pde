@@ -4,8 +4,8 @@ int bw, side;  //手番の色(1なら白、-1なら黒)、一辺の長さ
 boolean gameOver, check, promote;
 int wKing=6, wQueen=5, wRook=4, wBishop=3, wKnight=2, wPawn=1;
 int bKing=-6, bQueen=-5, bRook=-4, bBishop=-3, bKnight=-2, bPawn=-1;
-boolean wRookMoved1, wRookMoved2;  //白のキャスリング用
-boolean bRookMoved1, bRookMoved2;  //黒のキャスリング用
+boolean wCastQueen, wCastKing;  //白のキャスリング用
+boolean bCastQueen, bCastKing;  //黒のキャスリング用
 int board[][] = new int[10][10];
 
 void setup() {
@@ -67,6 +67,13 @@ void mousePressed() {
   }
 }
 
+void keyPressed() {
+  if (key=='r') {
+    startPosition();
+    showBoard();
+  }
+}
+
 //初期設定
 void startPosition() {
   //global variables
@@ -74,8 +81,8 @@ void startPosition() {
   p0=q1=p1=q1=-1;
   bw = 1;
   gameOver = false;
-  wRookMoved1 = wRookMoved2 = false;
-  bRookMoved1 = bRookMoved2 = false;
+  wCastQueen = wCastKing = false;
+  bCastQueen = bCastKing = false;
   check = false;
   promote = false;
   
@@ -194,7 +201,7 @@ boolean validMove(int i0, int j0, int i1, int j1) {
   if (board[i0][j0]==bw && !promote) {
     if (i1==i0 && j1==j0+bw && board[i0][j0+bw]==0) {return true;}  //1マス進む
     if (i1==i0 && j1==j0+2*bw && (j0==2||j0==7) && //(bw==1&&j0==7 || bw==-1&&j0==2) &&
-        board[i0][j0+bw]==0 && board[i0][j0+2*bw]==0) {return true;}  //2マス進む
+             board[i0][j0+bw]==0 && board[i0][j0+2*bw]==0) {return true;}  //2マス進む
     
     if (abs(i1-i0)==1 && j1==j0+bw && -6<=board[i1][j1]*bw &&
         board[i1][j1]*bw<=-1) {return true;} //斜め前の相手駒を取る
@@ -243,17 +250,17 @@ boolean validMove(int i0, int j0, int i1, int j1) {
     
     //白のキャスリング
     if (board[i0][j0] == wKing && !check) {
-      if (wRookMoved1==false && board[2][1]==0 && board[3][1]==0 && board[4][1]==0 &&  //クイーンサイド
+      if (wCastQueen==false && board[2][1]==0 && board[3][1]==0 && board[4][1]==0 &&  //クイーンサイド
           i1==3 && j1==1 && board[1][1]==wRook && !inCheck(i0, j0, 4, 1)) {return true;}
-      if (wRookMoved2==false && board[6][1]==0 && board[7][1]==0 &&  //キングサイド
+      if (wCastKing==false && board[6][1]==0 && board[7][1]==0 &&  //キングサイド
           i1==7 && j1==1 && board[8][1]==wRook && !inCheck(i0, j0, 6, 1)) {return true;}
     }
     
     //黒のキャスリング
     if (board[i0][j0] == bKing && !check) {
-      if (bRookMoved1==false && board[2][8]==0 && board[3][8]==0 && board[4][8]==0 &&  //クイーンサイド
+      if (bCastQueen==false && board[2][8]==0 && board[3][8]==0 && board[4][8]==0 &&  //クイーンサイド
           i1==3 && j1==8 && board[1][8]==bRook && !inCheck(i0, j0, 4, 8)) {return true;}
-      if (bRookMoved2==false && board[6][8]==0 && board[7][8]==0 &&  //キングサイド
+      if (bCastKing==false && board[6][8]==0 && board[7][8]==0 &&  //キングサイド
           i1==7 && j1==8 && board[8][8]==bRook && !inCheck(i0, j0, 6, 8)) {return true;}
     }
   }
@@ -293,38 +300,38 @@ void movePiece(int i0, int j0, int i1, int j1, boolean update) {
   
   //castle
   else if (board[i0][j0] == wKing) {
-    if (wRookMoved1==false && i1==3) {  //クイーン側のRook
+    if (wCastQueen==false && i1==3) {  //クイーン側のRook
       board[1][1] = 0;
       board[4][1] = wRook;
     }
-    else if (wRookMoved2==false && i1==7) {  //キング側のRook
+    else if (wCastKing==false && i1==7) {  //キング側のRook
       board[8][1] = 0;
       board[6][1] = wRook;
     }
     
-    if (update){wRookMoved1=true;  wRookMoved2=true;}  //Kingが動いたことを記録
+    if (update){wCastQueen=true;  wCastKing=true;}  //Kingが動いたことを記録
   }
   else if (board[i0][j0] == bKing) {
-    if (bRookMoved1==false && i1==3) {  //クイーン側のRook
+    if (bCastQueen==false && i1==3) {  //クイーン側のRook
       board[1][8] = 0;
       board[4][8] = bRook;
     }
-    else if (bRookMoved2==false && i1==7) {  //キング側のRook
+    else if (bCastKing==false && i1==7) {  //キング側のRook
       board[8][8] = 0;
       board[6][8] = bRook;
     }
     
-    if (update){bRookMoved1=true;  bRookMoved2=true;}  //Kingが動いたことを記録
+    if (update){bCastQueen=true;  bCastKing=true;}  //Kingが動いたことを記録
   }
   
   //Rookが動いたことを記録
   else if (board[i0][j0]==wRook && update) {
-    if (wRookMoved1==false && i0==1) {wRookMoved1=true;}
-    if (wRookMoved2==false && i0==8) {wRookMoved2=true;}
+    if (wCastQueen==false && i0==1) {wCastQueen=true;}
+    if (wCastKing==false && i0==8) {wCastKing=true;}
   } 
   else if (board[i0][j0]==bRook && update) {
-    if (bRookMoved1==false && i0==1) {bRookMoved1=true;}
-    if (bRookMoved2==false && i0==8) {bRookMoved2=true;}
+    if (bCastQueen==false && i0==1) {bCastQueen=true;}
+    if (bCastKing==false && i0==8) {bCastKing=true;}
   }
   
   board[i1][j1] = board[i0][j0];  //move piece
